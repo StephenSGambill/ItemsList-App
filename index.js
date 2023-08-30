@@ -1,8 +1,10 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"
-import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"
+import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"
+import { getDatabase, ref, push, onValue, remove }
+    from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"
 
 const appSettings = {
-    databaseURL: "https://realtime-database-df319-default-rtdb.europe-west1.firebasedatabase.app/"
+    databaseURL: "https://realtime-database-f4279-default-rtdb.firebaseio.com/"
 }
 
 const app = initializeApp(appSettings)
@@ -13,26 +15,64 @@ const inputFieldEl = document.getElementById("input-field")
 const addButtonEl = document.getElementById("add-button")
 const shoppingListEl = document.getElementById("shopping-list")
 
-addButtonEl.addEventListener("click", function() {
-    let inputValue = inputFieldEl.value
-    
-    push(shoppingListInDB, inputValue)
-    
-    clearInputFieldEl()
+addButtonEl.addEventListener("click", function () {
 
-    appendItemToShoppingListEl(inputValue)
+    let inputValue = inputFieldEl.value
+    if (inputValue) {
+        push(shoppingListInDB, inputValue)
+        clearInputFieldEl()
+    }
+
 })
 
-onValue(shoppingListInDB, function(snapshot) {
-    let itemsArray = Object.values(snapshot.val())
-    
-    // Challenge: Write a for loop to iterate on itemsArray and console log each item
+inputFieldEl.addEventListener("keypress", function () {
+    if (event.key === "Enter") {
+        let inputValue = inputFieldEl.value
+        if (inputValue) {
+            push(shoppingListInDB, inputValue)
+            clearInputFieldEl()
+        }
+
+    }
+
+})
+
+onValue(shoppingListInDB, function (snapshot) {
+
+    if (snapshot.exists()) {
+        let itemsArray = Object.entries(snapshot.val())
+
+        clearShoppingListEl()
+
+        for (let i = 0; i < itemsArray.length; i++) {
+            let currentItem = itemsArray[i]
+            appendItemToShoppingListEl(currentItem,)
+        }
+    } else {
+        shoppingListEl.innerHTML = "<li>No items in list</li>"
+    }
+
+
 })
 
 function clearInputFieldEl() {
     inputFieldEl.value = ""
 }
 
-function appendItemToShoppingListEl(itemValue) {
-    shoppingListEl.innerHTML += `<li>${itemValue}</li>`
+function appendItemToShoppingListEl(item) {
+    let itemID = item[0]
+    let itemValue = item[1]
+    let newEl = document.createElement("li")
+    newEl.textContent = itemValue
+
+    newEl.addEventListener("dblclick", () => {
+        let itemLocationInDB = ref(database, `shoppingList/${itemID}`)
+        remove(itemLocationInDB)
+    })
+
+    shoppingListEl.append(newEl)
+}
+
+function clearShoppingListEl() {
+    shoppingListEl.innerHTML = ""
 }
